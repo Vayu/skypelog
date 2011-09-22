@@ -1,0 +1,38 @@
+skypelog.py -- read and save Skype Linux chat history in Python.
+
+Skype for Linux stores user chat history in binary *.dbb files.
+skypelog.py implements classes to easily access data in these file in Python.
+
+I couldn't find a working solution for Linux to export/backup chat history.
+The D-Bus API does give access to the old message. The information on the structure
+of the DBB files is quite scarce. This script can serve as a starting point to
+further investigate format of these files.
+
+
+Running the script directly will show two basic options
+ --json dump all conversations into single *.js file (one for each account)
+        output is unsorted and lacks wrapping curly braces
+ --html save conversations for each account/contact pair in a separate *.html file
+        (relies on 'dialog_partner', so group chats are not handled properly)
+
+One can use skypelog.py as a module, then the following classes will be useful:
+class SkypeDBB -- generic dbb file reader
+    __init__ requires file name and maximum record size
+        maximum record size can be determined from the file name
+        (e.g. chatmsg512.dbb has maximum record size 512)
+    records() -- iterates over all records in file
+        returns dictionary with numeric field types as keys
+    readrecord(NUM) -- returns dictionary for NUM'th record in file (counts from 0)
+
+class SkypeMsgDBB(SkypeDBB) -- chatmsgXXX.dbb file reader
+    returns SkypeMsg instead of 'dict'
+    maximum record size is read/guessed from the file name
+
+class SkypeMsg -- provides human-readable field names for chat message record
+    formatting function to convert to full JSON (with all fields)
+    and shortened versions of JSON and HTML (as in client UI)
+
+
+Interesting discussion of the *.dbb file format:
+    http://www.hackerfactor.com/blog/index.php?/archives/231-Skype-Logs.html
+    http://www.hackerfactor.com/blog/index.php?/archives/231-Skype-Logs.html#c1055
