@@ -13,6 +13,7 @@ Read and parse Skype database files + simple export of chat message history.
 See README for details
 """
 
+from __future__ import with_statement
 import struct
 import time
 import json
