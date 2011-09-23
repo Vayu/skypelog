@@ -10,27 +10,32 @@ further investigate format of these files.
 
 
 Running the script directly will show two basic options
- --json dump all conversations into single *.js file (one for each account)
+ --json {compact,full} dump chat messages into single js file (for each account)
+        compact - saves only basic information, full - everything
         output is unsorted and lacks wrapping curly braces
  --html save conversations for each account/contact pair in a separate *.html file
         (relies on 'dialog_partner', so group chats are not handled properly)
 
 One can use skypelog.py as a module, then the following classes will be useful:
 class SkypeDBB -- generic dbb file reader
-    __init__ requires file name and maximum record size
-        maximum record size can be determined from the file name
+    __init__ requires file name and (optionally) maximum record size
+        maximum record size can be determined from the file name if omited
         (e.g. chatmsg512.dbb has maximum record size 512)
     records() -- iterates over all records in file
         returns dictionary with numeric field types as keys
     readrecord(NUM) -- returns dictionary for NUM'th record in file (counts from 0)
 
-class SkypeMsgDBB(SkypeDBB) -- chatmsgXXX.dbb file reader
-    returns SkypeMsg instead of 'dict'
-    maximum record size is read/guessed from the file name
+class SkypeMsgDBB(SkypeDBB) -- chatmsgDDDD.dbb file reader
+    reading methods return SkypeMsg instead of 'dict'
 
 class SkypeMsg -- provides human-readable field names for chat message record
     formatting function to convert to full JSON (with all fields)
     and shortened versions of JSON and HTML (as in client UI)
+
+class SkypeAccDBB(SkypeDBB) -- profileDDDD.dbb file reader
+    reading methods return SkypeAcc instead of 'dict'
+
+class SkypeAcc -- provides human-readable field names for account record
 
 
 Interesting discussion of the *.dbb file format:
