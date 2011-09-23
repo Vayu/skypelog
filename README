@@ -17,6 +17,8 @@ Running the script directly will show two basic options
         (relies on 'dialog_partner', so group chats are not handled properly)
 
 One can use skypelog.py as a module, then the following classes will be useful:
+(see example in apiuse.py)
+
 class SkypeDBB -- generic dbb file reader
     __init__ requires file name and (optionally) maximum record size
         maximum record size can be determined from the file name if omited
@@ -36,6 +38,11 @@ class SkypeAccDBB(SkypeDBB) -- profileDDDD.dbb file reader
     reading methods return SkypeAcc instead of 'dict'
 
 class SkypeAcc -- provides human-readable field names for account record
+
+class SkypeContactDBB(SkypeDBB) -- userDDDD.dbb file reader
+    reading methods return SkypeContact instead of 'dict'
+
+class SkypeContact -- provides human-readable field names for contacts record
 
 
 Interesting discussion of the *.dbb file format:

@@ -20,7 +20,7 @@ dumpfile(skypedir+"callmember256.dbb")
 
 dumpfile(skypedir+"chatmember256.dbb")
 
-dumpfile(skypedir+"user256.dbb")
-dumpfile(skypedir+"user1024.dbb")
+dumpfile(skypedir+"user256.dbb", cls=SkypeContactDBB)
+dumpfile(skypedir+"user1024.dbb", cls=SkypeContactDBB)
 
 dumpfile(skypedir+"voicemail256.dbb")

@@ -21,7 +21,8 @@ import base64
 import os
 
 
-__all__ = ['SkypeDBB', 'SkypeMsgDBB', 'SkypeMsg', 'SkypeAccDBB', 'SkypeAcc']
+__all__ = ['SkypeDBB', 'SkypeMsgDBB', 'SkypeMsg',
+           'SkypeAccDBB', 'SkypeAcc','SkypeContactDBB', 'SkypeContact']
 
 
 class SkypeDBB:
@@ -123,7 +124,7 @@ class SkypeMsgDBB(SkypeDBB):
 
 
 class SkypeMsg:
-    """ Represent and format chat message records"""
+    """Represent and format chat message records"""
 
     FIELD_NAMES = {   -1 : 'recid',
                       -2 : 'ctime',
@@ -205,7 +206,7 @@ class SkypeAccDBB(SkypeDBB):
 
 
 class SkypeAcc:
-    """ Represent and format account records"""
+    """Represent and format account records"""
 
     FIELD_NAMES = {   -1 : 'recid',
                       16 : 'skypename',
@@ -236,6 +237,66 @@ class SkypeAcc:
 
     def __init__(self, data):
         for k, v in SkypeAcc.FIELD_NAMES.iteritems():
+            if k in data:
+                setattr(self, v, data[k])
+            else:
+                setattr(self, v, None)
+
+    def __str__(self):
+        return self.__dict__.__str__()
+
+
+class SkypeContactDBB(SkypeDBB):
+    """Read and parse contacts DBB files userDDDDD.dbb"""
+
+    def __init__(self, filename, maxsize=0):
+        SkypeDBB.__init__(self, filename, maxsize)
+
+    def parserecord(self, rec):
+        """Wrap parserecord return in SkypeMsg class"""
+        return SkypeContact(SkypeDBB.parserecord(self, rec))
+
+
+class SkypeContact:
+    """Represent and format contacts records"""
+
+    FIELD_NAMES = {   -1 : 'recid',
+                       3 : 'authorization_certificate',  # binary
+                      11 : 'certificate_send_count',
+                      15 : 'account_modification_serial_nr',
+                      19 : 'saved_directory_blob',       # binary
+                      16 : 'skypename',
+                      20 : 'fullname',
+                      24 : 'phone',
+                      27 : 'server_synced',
+                      29 : 'birthday',
+                      33 : 'gender',
+                      35 : 'last_used_networktime',
+                      36 : 'languages',
+                      40 : 'country',
+                      44 : 'province',
+                      48 : 'city',
+                      52 : 'phone_home',
+                      56 : 'phone_office',
+                      60 : 'phone_mobile',
+                      64 : 'emails',
+                      68 : 'homepage',
+                      72 : 'about',
+                      93 : 'given_authlevel',
+                     113 : 'nrof_authed_buddies',
+                     121 : 'buddystatus',
+                     125 : 'isauthorized',
+                     129 : 'isblocked',
+                     132 : 'given_displayname',
+                     150 : 'avatar_image',           # binary
+                     157 : 'lastcalled_time',
+                    1019 : 'extprop_seen_birthday',  # binary
+                   }
+
+    __slots__ = FIELD_NAMES.values()
+
+    def __init__(self, data):
+        for k, v in SkypeContact.FIELD_NAMES.iteritems():
             if k in data:
                 setattr(self, v, data[k])
             else:
