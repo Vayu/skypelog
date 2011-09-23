@@ -19,13 +19,15 @@ Running the script directly will show two basic options
 One can use skypelog.py as a module, then the following classes will be useful:
 (see example in apiuse.py)
 
-class SkypeDBB -- generic dbb file reader
+class SkypeDBB -- generic DBB file reader
     __init__ requires file name and (optionally) maximum record size
         maximum record size can be determined from the file name if omited
         (e.g. chatmsg512.dbb has maximum record size 512)
     records() -- iterates over all records in file
         returns dictionary with numeric field types as keys
     readrecord(NUM) -- returns dictionary for NUM'th record in file (counts from 0)
+
+class SkypeObject -- base class for DBB records
 
 class SkypeMsgDBB(SkypeDBB) -- chatmsgDDDD.dbb file reader
     reading methods return SkypeMsg instead of 'dict'

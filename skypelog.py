@@ -22,7 +22,8 @@ import os
 
 
 __all__ = ['SkypeDBB', 'SkypeMsgDBB', 'SkypeMsg',
-           'SkypeAccDBB', 'SkypeAcc','SkypeContactDBB', 'SkypeContact']
+           'SkypeAccDBB', 'SkypeAcc','SkypeContactDBB', 'SkypeContact',
+           'SkypeChatDBB', 'SkypeChat', 'SkypeChatMemberDBB', 'SkypeChatMember']
 
 
 class SkypeDBB:
@@ -112,18 +113,32 @@ class SkypeDBB:
         self.f.close()
 
 
+class SkypeObject:
+    """Baseclass for DBB records"""
+
+    __slots__ = ()
+
+    def __init__(self, data):
+        for key, val in data.iteritems():
+            if key in self.FIELD_NAMES:
+                setattr(self, self.FIELD_NAMES[key], val)
+            else:
+                print ("%s: unknown field %d = %s"
+                        % (self.__class__.__name__, key, repr(val)))
+
+    def __str__(self):
+        return self.__dict__.__str__()
+
+
 class SkypeMsgDBB(SkypeDBB):
     """Read and parse Message DBB files chatmsgDDDDD.dbb"""
-
-    def __init__(self, filename, maxsize=0):
-        SkypeDBB.__init__(self, filename, maxsize)
 
     def parserecord(self, rec):
         """Wrap parserecord return in SkypeMsg class"""
         return SkypeMsg(SkypeDBB.parserecord(self, rec))
 
 
-class SkypeMsg:
+class SkypeMsg(SkypeObject):
     """Represent and format chat message records"""
 
     FIELD_NAMES = {   -1 : 'recid',
@@ -135,36 +150,37 @@ class SkypeMsg:
                      485 : 'timestamp',
                      488 : 'author',
                      492 : 'from_dispname',
-                     497 : 'chatmsg_type',
-                     500 : 'identities',
-                     505 : 'leavereason',
+                     497 : 'chatmsg_type',  # 1 - addmembers, 2 - createchatwith,
+                                            # 3 - said, 4- left, 5 - changetopic
+                     500 : 'users_added',
+                     505 : 'leavereason',   # 6 - unsubdcribe
                      508 : 'body_xml',
-                     513 : 'chatmsg_status',
+                     513 : 'chatmsg_status',  # 1 - sending, 2 - sent,
+                                              # 3 - recieved, 4 - read
                      517 : 'body_is_rawxml',
-                     818 : 'edited_by',
+                     888 : 'edited_by',
                      893 : 'edited_timestamp',
                     3160 : 'dialog_partner',
                     3170 : 'guid',             # binary
+                    3845 : 'int3845',
+                    3877 : 'int3877',
                    }
 
     __slots__ = FIELD_NAMES.values()
 
     def __init__(self, data):
         data[-2] = time.ctime(data[485])
-        for k, v in SkypeMsg.FIELD_NAMES.iteritems():
-            if k in data:
-                setattr(self, v, data[k])
-            else:
-                setattr(self, v, None)
-
-    def __str__(self):
-        return self.__dict__.__str__()
+        SkypeObject.__init__(self, data)
+        if 'dialog_partner' not in self.__dict__:
+            setattr(self, 'dialog_partner', None)
 
     def json_full(self):
         return json.dumps(self.__dict__, sort_keys=True, ensure_ascii=False)
 
     def json_compact(self):
         """Output in JSON only fields displayed in client UI"""
+        if 'body_xml' not in self.__dict__:  # not 'said' msg
+            return ""
         s = '''\
 {\
 "dialog_partner":"%(dialog_partner)s",\
@@ -178,7 +194,7 @@ class SkypeMsg:
 
     def html_compact(self):
         """Output in HTML only fields displayed in client UI"""
-        if self.body_xml == None:
+        if 'body_xml' not in self.__dict__:  # not 'said' msg
             return ""
         s = '''\
 <div class=msg>\
@@ -197,18 +213,17 @@ class SkypeMsg:
 class SkypeAccDBB(SkypeDBB):
     """Read and parse account DBB files profileDDDDD.dbb"""
 
-    def __init__(self, filename, maxsize=0):
-        SkypeDBB.__init__(self, filename, maxsize)
-
     def parserecord(self, rec):
         """Wrap parserecord return in SkypeMsg class"""
         return SkypeAcc(SkypeDBB.parserecord(self, rec))
 
 
-class SkypeAcc:
+class SkypeAcc(SkypeObject):
     """Represent and format account records"""
 
     FIELD_NAMES = {   -1 : 'recid',
+                       7 : 'emailbin',             # binary
+                      11 : 'int11',
                       16 : 'skypename',
                       20 : 'fullname',
                       29 : 'birthday',
@@ -229,35 +244,28 @@ class SkypeAcc:
                      109 : 'timezone',
                      116 : 'ipcountry',
                      150 : 'avatar_image',         # binary
+                     296 : 'balance_currency',
+                     301 : 'balance',
+                     641 : 'int641',
+                     645 : 'int645',
+                     657 : 'int657',
                      820 : 'rich_mood_text',
                     3205 : 'registration_timestamp',
+                    3217 : 'int3217',
                    }
 
     __slots__ = FIELD_NAMES.values()
 
-    def __init__(self, data):
-        for k, v in SkypeAcc.FIELD_NAMES.iteritems():
-            if k in data:
-                setattr(self, v, data[k])
-            else:
-                setattr(self, v, None)
-
-    def __str__(self):
-        return self.__dict__.__str__()
-
 
 class SkypeContactDBB(SkypeDBB):
     """Read and parse contacts DBB files userDDDDD.dbb"""
-
-    def __init__(self, filename, maxsize=0):
-        SkypeDBB.__init__(self, filename, maxsize)
 
     def parserecord(self, rec):
         """Wrap parserecord return in SkypeMsg class"""
         return SkypeContact(SkypeDBB.parserecord(self, rec))
 
 
-class SkypeContact:
+class SkypeContact(SkypeObject):
     """Represent and format contacts records"""
 
     FIELD_NAMES = {   -1 : 'recid',
@@ -278,32 +286,107 @@ class SkypeContact:
                       48 : 'city',
                       52 : 'phone_home',
                       56 : 'phone_office',
+                      59 : 'blob59',                 # binary
                       60 : 'phone_mobile',
                       64 : 'emails',
                       68 : 'homepage',
                       72 : 'about',
+                      77 : 'time77',
                       93 : 'given_authlevel',
+                      99 : 'int99',
+                     109 : 'int109',
                      113 : 'nrof_authed_buddies',
+                     115 : 'int115',
+                     119 : 'blob119',
                      121 : 'buddystatus',
                      125 : 'isauthorized',
                      129 : 'isblocked',
                      132 : 'given_displayname',
+                     141 : 'time141',
+                     146 : 'blob146',                # binary
                      150 : 'avatar_image',           # binary
                      157 : 'lastcalled_time',
+                     165 : 'system_account',         # eg echo123
+                    1006 : 'int1006',
+                    1007 : 'int1007',
+                    1008 : 'int1008',
+                    1009 : 'int1009',
+                    1010 : 'int1010',
+                    1011 : 'str1011',
                     1019 : 'extprop_seen_birthday',  # binary
+                    1022 : 'time1022',
                    }
 
     __slots__ = FIELD_NAMES.values()
 
-    def __init__(self, data):
-        for k, v in SkypeContact.FIELD_NAMES.iteritems():
-            if k in data:
-                setattr(self, v, data[k])
-            else:
-                setattr(self, v, None)
 
-    def __str__(self):
-        return self.__dict__.__str__()
+class SkypeChatDBB(SkypeDBB):
+    """Read and parse account DBB files chatDDDDD.dbb"""
+
+    def parserecord(self, rec):
+        """Wrap parserecord return in SkypeMsg class"""
+        return SkypeChat(SkypeDBB.parserecord(self, rec))
+
+
+class SkypeChat(SkypeObject):
+    """Represent and format chat records"""
+
+    FIELD_NAMES = {   -1 : 'recid',
+                       3 : 'int3',
+                      15 : 'blob15',  # binary
+                      19 : 'one19',
+                      23 : 'time23',
+                      31 : 'zero13',
+                      39 : 'blob',    # binary
+                      47 : 'one47',
+                      51 : 'cachedat',
+                      55 : 'topicauto',
+                      59 : 'one59',
+                     440 : 'chatname',
+                     445 : 'timestamp',
+                     448 : 'user448',
+                     453 : 'type',
+                     456 : 'posters',
+                     460 : 'members',
+                     464 : 'topic',
+                     468 : 'activemembers',
+                     472 : 'friendly_name',
+                     561 : 'bookmarked',
+                     565 : 'activity_time',
+                     569 : 'mystatus',
+                     581 : 'moodchat',
+                     638 : 'chatpicture',  # binary
+                     828 : 'user828',
+                    1006 : 'int1006',  # this and 3 below, related to multichat
+                    1007 : 'int1007',
+                    1010 : 'int1010',
+                    1020 : 'int1020',
+                    3081 : 'four3081',
+                    3096 : 'topic_xml',
+                   }
+
+    __slots__ = FIELD_NAMES.values()
+
+
+class SkypeChatMemberDBB(SkypeDBB):
+    """Read and parse account DBB files chatmemberDDDDD.dbb"""
+
+    def parserecord(self, rec):
+        """Wrap parserecord return in SkypeMsg class"""
+        return SkypeChatMember(SkypeDBB.parserecord(self, rec))
+
+
+class SkypeChatMember(SkypeObject):
+    """Represent and format chatmember records"""
+
+    FIELD_NAMES = {   -1 : 'recid',
+                     584 : 'chatname',
+                     593 : 'role',
+                     588 : 'identity',
+                     597 : 'isactive',
+                   }
+
+    __slots__ = FIELD_NAMES.values()
 
 
 # -----------------------------------------------------------------------------
