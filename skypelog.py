@@ -452,9 +452,9 @@ def dumpmsg_html_helper(user, chatdbbs):
 div.msg span.time:before { content: "["; }
 div.msg span.time:after { content: "]"; }
 div.msg span.time { color: #7F7F7F; margin: 0ex 0.2ex 0ex 0.2ex; }
-div.msg span.me:after { content: ":"; }
+div.msg span.me:after { content: ": "; }
 div.msg span.me { font-weight: bold; color: #0063CC; margin: 0ex 0.5ex 0ex 0.5ex; }
-div.msg span.from:after { content: ":"; }
+div.msg span.from:after { content: ": "; }
 div.msg span.from { font-weight: bold; color: #098DDE; margin: 0ex 0.5ex 0ex 0.5ex; }
 </style></head><body>
 '''
