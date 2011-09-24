@@ -198,7 +198,7 @@ class SkypeMsg(SkypeObject):
             return ""
         s = '''\
 <div class=msg>\
-<!-- %(dialog_partner)s %(timestamp)d -->\
+<!-- %(dialog_partner)s %(timestamp)d %(pk_id)d -->\
 <span class=time>%(ctime)s</span>\
 ''' % self.__dict__
         if self.dialog_partner == self.author:
