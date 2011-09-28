@@ -4,10 +4,11 @@ Skype for Linux stores user chat history in binary *.dbb files.
 skypelog.py implements classes to easily access data in these file in Python.
 
 I couldn't find a working solution for Linux to export/backup chat history.
-The D-Bus API does give access to the old message. The information on the structure
-of the DBB files is quite scarce. This script can serve as a starting point to
-further investigate format of these files.
+D-Bus API does not give access to old messages, at least I couldn't make it work.
+(possibly a bug, in theory it should work and there is evidence that it did before).
 
+The information on the structure of the DBB files is quite scarce. This script
+can serve as a starting point to further investigate the format of these files.
 
 Running the script directly will show two basic options
  --json {compact,full} dump chat messages into single js file (for each account)
@@ -21,7 +22,7 @@ One can use skypelog.py as a module, then the following classes will be useful:
 
 class SkypeDBB -- generic DBB file reader
     __init__ requires file name and (optionally) maximum record size
-        maximum record size can be determined from the file name if omited
+        maximum record size can be determined from the file name if omitted
         (e.g. chatmsg512.dbb has maximum record size 512)
     records() -- iterates over all records in file
         returns dictionary with numeric field types as keys
