@@ -163,13 +163,17 @@ class SkypeMsg(SkypeObject):
                     3160 : 'dialog_partner',
                     3170 : 'guid',             # binary
                     3845 : 'int3845',
+                    3857 : 'int3857',
                     3877 : 'int3877',
                    }
 
     __slots__ = FIELD_NAMES.values()
 
     def __init__(self, data):
-        data[-2] = time.ctime(data[485])
+        if 485 in data:
+            data[-2] = time.ctime(data[485])
+        else:
+            data[-2] = 'Unknown'
         SkypeObject.__init__(self, data)
         if 'dialog_partner' not in self.__dict__:
             setattr(self, 'dialog_partner', None)
