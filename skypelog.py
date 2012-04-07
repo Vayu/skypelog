@@ -212,7 +212,11 @@ class SkypeMsg(SkypeObject):
             s += "<span class=from>%(from_dispname)s</span>" % self.__dict__
         else:
             s += "<span class=me>%(from_dispname)s</span>" % self.__dict__
-        msgbody = self.body_xml.replace("\n", "<br>\n")
+        msgbody = self.body_xml
+        msgbody = msgbody.replace('&', '&amp;')
+        msgbody = msgbody.replace('<', '&lt;')
+        msgbody = msgbody.replace('>', '&gt;')
+        msgbody = msgbody.replace('\n', '<br>\n')
         s += msgbody + "</div>"
         return s
 
@@ -471,7 +475,9 @@ div.msg span.from { font-weight: bold; color: #098DDE; margin: 0ex 0.5ex 0ex 0.5
         for r in msgdbb.records():
             if r.dialog_partner not in contacts:
                 contacts[r.dialog_partner] = []
-            contacts[r.dialog_partner].append(r.html_compact())
+            msg = r.html_compact()
+            if msg:
+                contacts[r.dialog_partner].append(msg)
         for name in contacts.keys():
             fname = "%s-%s.html" % (user, name)
             print "writing %s ..." % fname
