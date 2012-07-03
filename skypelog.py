@@ -19,6 +19,7 @@ import time
 import json
 import base64
 import os
+import platform
 
 
 __all__ = ['SkypeDBB', 'SkypeMsgDBB', 'SkypeMsg',
@@ -408,7 +409,10 @@ class SkypeChatMember(SkypeObject):
 def forskypedbbs(func, prefix):
     """Call 'func' on every 'prefix'xxx.dbb"""
     userdirs = []
-    skype = os.path.join(os.environ["HOME"], ".Skype")
+    if platform.system() == "Darwin":
+      skype = os.path.join(os.environ["HOME"], "Library/Application Support/Skype")
+    else:
+      skype = os.path.join(os.environ["HOME"], ".Skype")
     for name in os.listdir(skype):
         pathname = os.path.join(skype, name)
         if os.path.isdir(pathname):
