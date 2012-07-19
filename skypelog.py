@@ -482,14 +482,77 @@ div.msg span.from { font-weight: bold; color: #098DDE; margin: 0ex 0.5ex 0ex 0.5
             msg = r.html_compact()
             if msg:
                 contacts[r.dialog_partner].append(msg)
+
     for name in contacts.keys():
-        fname = "%s-%s.html" % (user, name)
-        print "writing %s ..." % fname
-        with open(fname, 'wb') as f:
-            f.write(HEAD.replace("[TITLE]",
-                                    "'%s' chats with '%s'" % (user, name)))
-            f.write("\n".join(sorted(contacts[name])))
-            f.write("</body></html>")
+        messages = sorted(contacts[name])
+        contacts[name] = None
+        if len(messages) == 0:
+            continue
+
+        seqn = 0
+        tail = "</body></html>"
+        global MODE
+        fmode = MODE
+        fname = "%s-%s-%d.html" % (user, name, seqn)
+        if os.path.exists(fname):
+            if fmode == 'guess':
+                with open(fname, 'rb') as f:
+                    for line in f:
+                        if line.startswith('<div class=msg>'):
+                            if not line.startswith(messages[0]):
+                                fmode = 'append'
+                            else:
+                                fmode = 'overwrite'
+                            break
+        else:
+            fmode = 'overwrite'
+
+        if fmode == 'append':
+            while os.path.exists(fname):
+                seqn += 1
+                fname = "%s-%s-%d.html" % (user, name, seqn)
+            seqn -= 1
+            fname = "%s-%s-%d.html" % (user, name, seqn)
+            f = open(fname, 'r+b')
+            f.seek(-len(tail), 2)
+            if f.readline() != tail:
+                f.seek(-len(tail), 2)
+                print repr(f.readline()), repr(tail)
+                f.close()
+                fmode = 'overwrite'
+                print "Bad end of file: %s" % fname
+                seqn += 1
+                fname = "%s-%s-%d.html" % (user, name, seqn)
+            else:
+                f.seek(-len(tail), 2)
+
+        if fmode != 'append':  # not else !!!
+            f = open(fname, 'wb')
+
+        idx = 0
+        bytes = f.tell()
+        print fname, fmode
+
+        while True:
+            with f:
+                if fmode != 'append':
+                    head = HEAD.replace("[TITLE]", "'%s' chats with '%s' part %d"
+                                        % (user, name, seqn))
+                    f.write(head)
+                    bytes += len(head)
+                while bytes < SIZE_LIMIT and idx < len(messages):
+                    f.write(messages[idx])
+                    f.write("\n")
+                    bytes += len(messages[idx]) + 1
+                    idx += 1
+                f.write(tail)
+            if idx < len(messages):
+                bytes = 0
+                seqn += 1
+                fname = "%s-%s-%d.html" % (user, name, seqn)
+                f = open(fname, 'wb')
+            else:
+                break
 
 
 def dumpmsg_html():
@@ -506,39 +569,74 @@ Option:
   -h, --help                Show this help message
   -j, --json={compact,full} Save history for each user in *.js file (unsorted)
   -t, --html                Save history for user/contact pair in *.html files
+  -m, --mode={append,overwrite} HTML output mode (guess by default)
+  -l, --limit=bytes[KM]     Limit output html file size
 """
+    sys.exit()
 
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hj:t",
-                                   ["help", "json", "html"])
+        opts, args = getopt.getopt(sys.argv[1:], "hj:tm:l:",
+                                   ["help", "json", "html", "mode", "limit"])
     except getopt.GetoptError, err:
         print str(err)
         usage()
         sys.exit(2)
     if not opts:
         opts = [("-h", "")]
+
+    global SIZE_LIMIT
+    global MODE
+    action = []
+    SIZE_LIMIT = 1024**3
+    MODE = "guess"
     for op, arg in opts:
         if op in ("-h", "--help"):
             usage()
-            sys.exit()
         elif op in ("-j", "--json"):
             if arg in ("compact"):
                 print "Dumping chat history to JSON (compact)..."
-                dumpmsg_json_compact()
+                action.append('dumpmsg_json_compact')
             elif arg in ("full"):
                 print "Dumping chat history to JSON (full)..."
-                dumpmsg_json_full()
+                action.append('dumpmsg_json_full')
             else:
                 print "JSON: unknown argument '%s'" % arg
-                usage()
-                sys.exit()
+                action.append('usage')
         elif op in ("-t", "--html"):
             print "Dumping chat history to HTML..."
-            dumpmsg_html()
+            action.append('dumpmsg_html')
+        elif op in ("-m", "--mode"):
+            if arg in ["append", "overwrite", "guess"]:
+                MODE = arg
+                print "Setting mode to '%s'" % MODE
+            else:
+                print "MODE: bad argument '%s'" % arg
+                action.append('usage')
+        elif op in ("-l", "--limit"):
+            factors = {'K' : 1024, 'M' : 1024**2}
+            unit = 1
+            val = arg
+            if len(arg)>1 and arg[-1] in factors:
+                unit = factors[arg[-1]]
+                val = arg[:-1]
+            try:
+                SIZE_LIMIT = int(val)*unit
+                if SIZE_LIMIT < 1024:
+                    raise ValueError()
+                print "Setting html file size limit to %d" % SIZE_LIMIT
+            except ValueError:
+                print "LIMIT: bad argument '%s'" % arg
+                action.append('usage')
         else:
             assert False, "unhandled option"
+
+    if len(action) == 1:
+        globals()[action[0]]()
+    else:
+        print "Error: ambiguous parameters"
+        usage()
 
 
 if __name__ == '__main__':
