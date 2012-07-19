@@ -482,14 +482,14 @@ div.msg span.from { font-weight: bold; color: #098DDE; margin: 0ex 0.5ex 0ex 0.5
             msg = r.html_compact()
             if msg:
                 contacts[r.dialog_partner].append(msg)
-        for name in contacts.keys():
-            fname = "%s-%s.html" % (user, name)
-            print "writing %s ..." % fname
-            with open(fname, 'wb') as f:
-                f.write(HEAD.replace("[TITLE]",
-                                     "'%s' chats with '%s'" % (user, name)))
-                f.write("\n".join(sorted(contacts[name])))
-                f.write("</body></html>")
+    for name in contacts.keys():
+        fname = "%s-%s.html" % (user, name)
+        print "writing %s ..." % fname
+        with open(fname, 'wb') as f:
+            f.write(HEAD.replace("[TITLE]",
+                                    "'%s' chats with '%s'" % (user, name)))
+            f.write("\n".join(sorted(contacts[name])))
+            f.write("</body></html>")
 
 
 def dumpmsg_html():
