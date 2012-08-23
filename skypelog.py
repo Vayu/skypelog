@@ -578,7 +578,7 @@ Option:
 def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hj:tm:l:",
-                                   ["help", "json", "html", "mode", "limit"])
+                                   ["help", "json=", "html", "mode=", "limit="])
     except getopt.GetoptError, err:
         print str(err)
         usage()
