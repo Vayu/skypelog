@@ -1,3 +1,8 @@
+Warning this project is obsolete!
+=================================
+
+**Skype since version 4+ is using SQLite DB to store everything. Use can standard tools to extract anything you need.**
+
 skypelog.py -- read and save Skype Linux chat history in Python.
 
 Skype for Linux stores user chat history in binary *.dbb files.
